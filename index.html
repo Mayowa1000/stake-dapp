@@ -496,17 +496,23 @@
         const shortHash = t.hash.slice(0, 10) + '…' + t.hash.slice(-8);
         const label = t.type === 'stake' ? 'Stake' : t.type === 'unstake' ? 'Unstake' : 'Claim';
         const color = t.type === 'claim' ? 'text-brand-600' : 'text-gray-800';
+        const explorerUrl = EXPLORER_TX + t.hash;
         return `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-50 last:border-0">
-            <div>
-              <span class="font-medium ${color}">${label}</span>
-              <span class="text-gray-500 ml-2">${format(t.amount)} TEST</span>
-              <span class="text-xs text-gray-400 ml-2">· fee ${t.fee} QMS</span>
+          <div class="flex flex-col gap-1 py-3 border-b border-gray-50 last:border-0">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span class="font-medium ${color}">${label}</span>
+                <span class="text-gray-500 ml-2">${format(t.amount)} TEST</span>
+                <span class="text-xs text-gray-400 ml-2">· fee ${t.fee} QMS</span>
+              </div>
             </div>
-            <a href="${EXPLORER_TX}${t.hash}" target="_blank" rel="noopener noreferrer"
-               class="font-mono text-xs text-brand-600 hover:underline truncate max-w-full">
-              ${shortHash} ↗
-            </a>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono text-xs text-gray-500 break-all">${t.hash}</span>
+              <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition shrink-0">
+                View on Explorer ↗
+              </a>
+            </div>
           </div>`;
       }).join('');
     }
@@ -684,8 +690,8 @@
         showToast('Enter a valid amount');
         return;
       }
-      if (amount > userBalance) {
-        showToast('Insufficient balance');
+      if (amount + NETWORK_FEE_QMS > userBalance) {
+        showToast('Insufficient balance (need amount + 0.001 QMS fee)');
         return;
       }
 
@@ -695,6 +701,8 @@
         const pos = accrueRewards(userAddress);
         pos.staked += amount;
         userBalance -= amount;
+        userBalance -= NETWORK_FEE_QMS; // deduct network fee
+        if (userBalance < 0) userBalance = 0;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
 
@@ -704,7 +712,7 @@
         stakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Staked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
+        showToast(`Staked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
@@ -729,6 +737,8 @@
 
         pos.staked -= amount;
         userBalance += amount;
+        userBalance -= NETWORK_FEE_QMS; // deduct network fee
+        if (userBalance < 0) userBalance = 0;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
 
@@ -738,7 +748,7 @@
         unstakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Unstaked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
+        showToast(`Unstaked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
@@ -758,6 +768,8 @@
 
         const claimed = pos.rewards;
         userBalance += claimed;
+        userBalance -= NETWORK_FEE_QMS; // deduct network fee
+        if (userBalance < 0) userBalance = 0;
         pos.rewards = 0;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
@@ -767,7 +779,7 @@
 
         updateUserUI();
         updateGlobalStats();
-        showToast(`Claimed ${format(claimed)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
+        showToast(`Claimed ${format(claimed)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
