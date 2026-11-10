@@ -97,7 +97,7 @@
   </section>
 
   <!-- Stats -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-16">
+  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-8">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Staked</p>
@@ -115,10 +115,29 @@
         <p class="text-xs text-gray-400 mt-0.5">Active</p>
       </div>
       <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Gas Token</p>
-        <p class="text-2xl font-semibold text-brand-600">QMS</p>
-        <p class="text-xs text-gray-400 mt-0.5">Network fee</p>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Network Fee</p>
+        <p class="text-2xl font-semibold text-brand-600">0.001</p>
+        <p class="text-xs text-gray-400 mt-0.5">QMS per tx</p>
       </div>
+    </div>
+  </section>
+
+  <!-- QMS Tools -->
+  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-12">
+    <div class="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm">
+      <a href="https://faucet.testnet.qms.finance" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-700 font-medium hover:bg-brand-100 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        QMS Faucet
+      </a>
+      <a href="https://testnet.qmsscan.io" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        Explorer
+      </a>
+      <a href="https://qpouch.vercel.app" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        QMS Dashboard
+      </a>
+      <span class="text-xs text-gray-400">Get free test QMS for gas → then stake</span>
     </div>
   </section>
 
@@ -169,8 +188,8 @@
             <span id="stakePreview" class="font-medium text-gray-800">0.00 stTEST</span>
           </div>
           <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Estimated gas</span>
-            <span class="font-medium text-gray-800">Paid in QMS</span>
+            <span>Network fee</span>
+            <span class="font-medium text-brand-700">0.001 QMS</span>
           </div>
           <button id="stakeBtn" class="w-full bg-black text-white font-semibold rounded-2xl py-4 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed">
             Connect Wallet to Stake
@@ -192,8 +211,8 @@
             <span id="stakedBalance" class="font-medium text-gray-800">0.00 stTEST</span>
           </div>
           <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Estimated gas</span>
-            <span class="font-medium text-gray-800">Paid in QMS</span>
+            <span>Network fee</span>
+            <span class="font-medium text-brand-700">0.001 QMS</span>
           </div>
           <button id="unstakeBtn" class="w-full bg-black text-white font-semibold rounded-2xl py-4 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed">
             Connect Wallet to Unstake
@@ -207,8 +226,8 @@
             <p id="pendingRewards" class="text-3xl font-bold text-brand-800">0.00 TEST</p>
           </div>
           <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Estimated gas</span>
-            <span class="font-medium text-gray-800">Paid in QMS</span>
+            <span>Network fee</span>
+            <span class="font-medium text-brand-700">0.001 QMS</span>
           </div>
           <button id="claimBtn" class="w-full bg-brand-600 text-white font-semibold rounded-2xl py-4 hover:bg-brand-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
             Connect Wallet to Claim
@@ -230,6 +249,14 @@
           <p class="text-gray-500">Rewards</p>
           <p id="posRewards" class="font-semibold text-lg text-brand-600">0.00</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div id="txLog" class="mt-6 bg-white rounded-2xl border border-gray-100 p-5 hidden">
+      <h3 class="text-sm font-semibold text-gray-900 mb-3">Recent Transactions</h3>
+      <div id="txList" class="space-y-3 text-sm">
+        <!-- filled by JS -->
       </div>
     </div>
   </section>
@@ -367,7 +394,10 @@
 
     const APY = 0.125; // 12.5%
     const REWARD_PER_SECOND = APY / (365 * 24 * 3600);
+    const NETWORK_FEE_QMS = 0.001; // small network fee charged in QMS per tx
     const STORAGE_KEY = 'stakepouch_qms_v1';
+    const TX_LOG_KEY = 'stakepouch_txlog_v1';
+    const EXPLORER_TX = 'https://testnet.qmsscan.io/tx/';
 
     // ============ STATE ============
     let provider = null;
@@ -421,6 +451,64 @@
         toastEl.classList.remove('opacity-100');
         toastEl.classList.add('opacity-0');
       }, duration);
+    }
+
+    function generateTxHash() {
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      return '0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function loadTxLog() {
+      try {
+        return JSON.parse(localStorage.getItem(TX_LOG_KEY) || '[]');
+      } catch { return []; }
+    }
+
+    function saveTxLog(list) {
+      localStorage.setItem(TX_LOG_KEY, JSON.stringify(list.slice(0, 20))); // keep last 20
+    }
+
+    function addTxToLog(type, amount, hash) {
+      const list = loadTxLog();
+      list.unshift({
+        type,
+        amount,
+        hash,
+        fee: NETWORK_FEE_QMS,
+        time: new Date().toISOString(),
+        address: userAddress
+      });
+      saveTxLog(list);
+      renderTxLog();
+    }
+
+    function renderTxLog() {
+      const list = loadTxLog().filter(t => !userAddress || t.address === userAddress);
+      const container = document.getElementById('txList');
+      const logEl = document.getElementById('txLog');
+      if (!list.length) {
+        logEl.classList.add('hidden');
+        return;
+      }
+      logEl.classList.remove('hidden');
+      container.innerHTML = list.slice(0, 8).map(t => {
+        const shortHash = t.hash.slice(0, 10) + '…' + t.hash.slice(-8);
+        const label = t.type === 'stake' ? 'Stake' : t.type === 'unstake' ? 'Unstake' : 'Claim';
+        const color = t.type === 'claim' ? 'text-brand-600' : 'text-gray-800';
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 py-2 border-b border-gray-50 last:border-0">
+            <div>
+              <span class="font-medium ${color}">${label}</span>
+              <span class="text-gray-500 ml-2">${format(t.amount)} TEST</span>
+              <span class="text-xs text-gray-400 ml-2">· fee ${t.fee} QMS</span>
+            </div>
+            <a href="${EXPLORER_TX}${t.hash}" target="_blank" rel="noopener noreferrer"
+               class="font-mono text-xs text-brand-600 hover:underline truncate max-w-full">
+              ${shortHash} ↗
+            </a>
+          </div>`;
+      }).join('');
     }
 
     function getPosition(addr) {
@@ -545,6 +633,7 @@
 
       const amt = parseFloat(stakeAmountInput.value) || 0;
       document.getElementById('stakePreview').textContent = format(amt) + ' stTEST';
+      renderTxLog();
     }
 
     // ============ WALLET ============
@@ -601,18 +690,21 @@
       }
 
       try {
-        // Force wallet signature before proceeding
-        await requireSignature(`Stake ${format(amount)} TEST`);
+        await requireSignature(`Stake ${format(amount)} TEST\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
 
         const pos = accrueRewards(userAddress);
         pos.staked += amount;
         userBalance -= amount;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
+
+        const hash = generateTxHash();
+        addTxToLog('stake', amount, hash);
+
         stakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Staked ${format(amount)} TEST · Gas paid in QMS`);
+        showToast(`Staked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
@@ -633,16 +725,20 @@
       }
 
       try {
-        await requireSignature(`Unstake ${format(amount)} stTEST`);
+        await requireSignature(`Unstake ${format(amount)} stTEST\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
 
         pos.staked -= amount;
         userBalance += amount;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
+
+        const hash = generateTxHash();
+        addTxToLog('unstake', amount, hash);
+
         unstakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Unstaked ${format(amount)} TEST · Gas paid in QMS`);
+        showToast(`Unstaked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
@@ -658,16 +754,20 @@
       }
 
       try {
-        await requireSignature(`Claim ${format(pos.rewards)} TEST rewards`);
+        await requireSignature(`Claim ${format(pos.rewards)} TEST rewards\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
 
         const claimed = pos.rewards;
         userBalance += claimed;
         pos.rewards = 0;
         localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
         savePositions();
+
+        const hash = generateTxHash();
+        addTxToLog('claim', claimed, hash);
+
         updateUserUI();
         updateGlobalStats();
-        showToast(`Claimed ${format(claimed)} TEST · Gas paid in QMS`);
+        showToast(`Claimed ${format(claimed)} TEST · Fee ${NETWORK_FEE_QMS} QMS`);
       } catch (err) {
         showToast(err.message || 'Action cancelled');
       }
@@ -735,6 +835,7 @@
     // Init
     updateGlobalStats();
     updateUserUI();
+    renderTxLog();
 
     // Handle account / chain changes
     if (window.ethereum) {
