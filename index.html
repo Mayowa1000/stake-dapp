@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StakePouch — QMS Testnet Staking Pool</title>
-  <meta name="description" content="Self-custody staking pool on QMS Testnet. Gas paid in QMS. Always sign in your wallet before every action." />
+  <title>StakePouch — QMS Testnet Staking</title>
+  <meta name="description" content="Self-custody staking pool on QMS Testnet. Gas paid in QMS. Sign every action in your wallet." />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,10 @@
           },
           fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 2px 8px -2px rgba(0,0,0,0.06), 0 4px 16px -4px rgba(0,0,0,0.08)',
+            'card': '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)',
           }
         }
       }
@@ -37,351 +41,423 @@
   </script>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
-    .card-hover { transition: all 0.2s ease; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1); }
     .stat-value { font-variant-numeric: tabular-nums; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    .tab-active { color: #0f766e; border-bottom: 2px solid #14b8a6; font-weight: 600; }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
+<body class="bg-[#f8fafb] text-gray-900 min-h-screen antialiased">
 
   <!-- Navbar -->
-  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <span class="font-semibold text-lg tracking-tight">StakePouch</span>
-      </div>
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/80">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+          <svg class="w-full h-full" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="11" fill="url(#lg)"/>
+  <circle cx="20" cy="20" r="11" stroke="white" stroke-width="2" fill="none" opacity="0.9"/>
+  <path d="M20 13v14M16.5 16.5c0-1.5 1.5-2.5 3.5-2.5s3.5 1 3.5 2.5-1.5 2.2-3.5 2.5c-2 .3-3.5 1.2-3.5 2.8s1.6 2.7 3.5 2.7 3.5-1.1 3.5-2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="lg" x1="8" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+</svg>
+        </div>
+        <div>
+          <span class="font-semibold text-[15px] tracking-tight block leading-tight">StakePouch</span>
+          <span class="text-[11px] text-gray-400 leading-none">QMS Testnet</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2.5">
         <span id="networkBadge" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
           QMS Testnet
         </span>
-        <button id="disconnectBtn" class="hidden text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded-full border border-gray-200 hover:bg-gray-50 transition">
+        <button id="disconnectBtn" class="hidden text-sm font-medium text-gray-600 hover:text-gray-900 px-3.5 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition">
           Disconnect
         </button>
-        <button id="connectBtn" class="bg-black text-white text-sm font-medium rounded-full px-5 py-2 hover:bg-gray-800 transition">
+        <button id="connectBtn" class="bg-gray-900 text-white text-sm font-medium rounded-xl px-5 py-2.5 hover:bg-gray-800 transition shadow-sm">
           Connect Wallet
         </button>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <!-- Hero -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12 text-center">
-    <p class="text-sm font-medium text-brand-600 tracking-wide uppercase mb-3">Self-Custody · QMS Testnet</p>
-    <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 mb-4">
-      Your keys.<br class="sm:hidden" /> Your <span class="text-brand-600">Stake</span>.
-    </h1>
-    <p class="text-lg text-gray-600 max-w-xl mx-auto mb-8 leading-relaxed">
-      Stake on QMS Testnet. Gas is paid in <strong>QMS</strong>.  
-      Every action requires a signature in your wallet before it proceeds.
-    </p>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-      <button id="heroStakeBtn" class="w-full sm:w-auto bg-black text-white font-medium rounded-full px-8 py-3.5 hover:bg-gray-800 transition flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        Start Staking
-      </button>
-      <a href="#how" class="w-full sm:w-auto border border-gray-300 text-gray-800 font-medium rounded-full px-8 py-3.5 hover:bg-white transition text-center">
-        How it works
-      </a>
-    </div>
-    <p class="mt-6 text-xs text-gray-500">
-      v1.1.0 · QMS Testnet · Unofficial demo · Not audited · Do not use with real funds
-    </p>
-  </section>
-
-  <!-- Stats -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-8">
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Staked</p>
-        <p id="statTvl" class="text-2xl font-semibold stat-value">0.00</p>
-        <p class="text-xs text-gray-400 mt-0.5">TEST</p>
+  <main>
+    <!-- Hero -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-12 text-center">
+      <div class="inline-flex items-center gap-2 text-xs font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-3.5 py-1.5 mb-5">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+        Self-Custody DeFi Yield · QMS Testnet
       </div>
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">APY</p>
-        <p id="statApy" class="text-2xl font-semibold text-brand-600 stat-value">12.5%</p>
-        <p class="text-xs text-gray-400 mt-0.5">Estimated</p>
-      </div>
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Stakers</p>
-        <p id="statStakers" class="text-2xl font-semibold stat-value">0</p>
-        <p class="text-xs text-gray-400 mt-0.5">Active</p>
-      </div>
-      <div class="bg-white rounded-2xl border border-gray-100 p-5 text-center card-hover">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Network Fee</p>
-        <p class="text-2xl font-semibold text-brand-600">0.001</p>
-        <p class="text-xs text-gray-400 mt-0.5">QMS per tx</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- QMS Tools -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-12">
-    <div class="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm">
-      <a href="https://faucet.testnet.qms.finance" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-700 font-medium hover:bg-brand-100 transition">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        QMS Faucet
-      </a>
-      <a href="https://testnet.qmsscan.io" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        Explorer
-      </a>
-      <a href="https://qpouch.vercel.app" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        QMS Dashboard
-      </a>
-      <span class="text-xs text-gray-400">Get free test QMS for gas → then stake</span>
-    </div>
-  </section>
-
-  <!-- Main Staking Card -->
-  <section id="stake" class="max-w-xl mx-auto px-4 sm:px-6 mb-20">
-    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-      <!-- Tabs -->
-      <div class="flex border-b border-gray-100">
-        <button data-tab="stake" class="tab-btn flex-1 py-4 text-sm font-semibold text-gray-900 border-b-2 border-brand-500">Stake</button>
-        <button data-tab="unstake" class="tab-btn flex-1 py-4 text-sm font-medium text-gray-500 hover:text-gray-800">Unstake</button>
-        <button data-tab="claim" class="tab-btn flex-1 py-4 text-sm font-medium text-gray-500 hover:text-gray-800">Claim</button>
-      </div>
-
-      <div class="p-6 sm:p-8">
-        <!-- Wallet status -->
-        <div id="walletStatus" class="mb-6 hidden">
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-500">Connected</span>
-            <span id="walletAddress" class="font-mono text-gray-800 font-medium"></span>
-          </div>
-          <div class="flex items-center justify-between text-sm mt-1">
-            <span class="text-gray-500">Balance</span>
-            <span id="walletBalance" class="font-medium">0.00 TEST</span>
-          </div>
-          <div class="flex items-center justify-between text-sm mt-1">
-            <span class="text-gray-500">Network / Gas</span>
-            <span class="font-medium text-brand-700">QMS Testnet · Gas in QMS</span>
-          </div>
-        </div>
-
-        <!-- Important notice -->
-        <div class="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 leading-relaxed">
-          <strong>Signature required.</strong> Every stake, unstake or claim will open your wallet and ask you to sign before the action is executed. Gas is paid in <strong>QMS</strong>.
-        </div>
-
-        <!-- Stake Panel -->
-        <div id="panel-stake" class="tab-panel">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Amount to stake</label>
-          <div class="relative mb-4">
-            <input id="stakeAmount" type="number" min="0" step="0.01" placeholder="0.00"
-              class="w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 pr-20 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" />
-            <button id="maxStakeBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100">
-              MAX
-            </button>
-          </div>
-          <div class="flex justify-between text-sm text-gray-500 mb-2">
-            <span>You will receive</span>
-            <span id="stakePreview" class="font-medium text-gray-800">0.00 stTEST</span>
-          </div>
-          <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Network fee</span>
-            <span class="font-medium text-brand-700">0.001 QMS</span>
-          </div>
-          <button id="stakeBtn" class="w-full bg-black text-white font-semibold rounded-2xl py-4 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            Connect Wallet to Stake
-          </button>
-        </div>
-
-        <!-- Unstake Panel -->
-        <div id="panel-unstake" class="tab-panel hidden">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Amount to unstake</label>
-          <div class="relative mb-4">
-            <input id="unstakeAmount" type="number" min="0" step="0.01" placeholder="0.00"
-              class="w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 pr-20 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" />
-            <button id="maxUnstakeBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100">
-              MAX
-            </button>
-          </div>
-          <div class="flex justify-between text-sm text-gray-500 mb-2">
-            <span>Your staked balance</span>
-            <span id="stakedBalance" class="font-medium text-gray-800">0.00 stTEST</span>
-          </div>
-          <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Network fee</span>
-            <span class="font-medium text-brand-700">0.001 QMS</span>
-          </div>
-          <button id="unstakeBtn" class="w-full bg-black text-white font-semibold rounded-2xl py-4 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            Connect Wallet to Unstake
-          </button>
-        </div>
-
-        <!-- Claim Panel -->
-        <div id="panel-claim" class="tab-panel hidden">
-          <div class="bg-brand-50 rounded-2xl p-5 mb-4 text-center">
-            <p class="text-sm text-brand-700 mb-1">Pending Rewards</p>
-            <p id="pendingRewards" class="text-3xl font-bold text-brand-800">0.00 TEST</p>
-          </div>
-          <div class="flex justify-between text-sm text-gray-500 mb-6">
-            <span>Network fee</span>
-            <span class="font-medium text-brand-700">0.001 QMS</span>
-          </div>
-          <button id="claimBtn" class="w-full bg-brand-600 text-white font-semibold rounded-2xl py-4 hover:bg-brand-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
-            Connect Wallet to Claim
-          </button>
-          <p class="text-xs text-center text-gray-500 mt-3">Rewards accrue every second. You must sign in your wallet before claiming.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Your Position -->
-    <div id="positionCard" class="mt-6 bg-white rounded-2xl border border-gray-100 p-5 hidden">
-      <h3 class="text-sm font-semibold text-gray-900 mb-3">Your Position</h3>
-      <div class="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p class="text-gray-500">Staked</p>
-          <p id="posStaked" class="font-semibold text-lg">0.00</p>
-        </div>
-        <div>
-          <p class="text-gray-500">Rewards</p>
-          <p id="posRewards" class="font-semibold text-lg text-brand-600">0.00</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Transactions -->
-    <div id="txLog" class="mt-6 bg-white rounded-2xl border border-gray-100 p-5 hidden">
-      <h3 class="text-sm font-semibold text-gray-900 mb-3">Recent Transactions</h3>
-      <div id="txList" class="space-y-3 text-sm">
-        <!-- filled by JS -->
-      </div>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-20">
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div class="bg-white rounded-2xl border border-gray-100 p-6">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">FEATURES</p>
-        <h3 class="text-xl font-semibold mb-2">Built for QMS Testnet</h3>
-        <ul class="space-y-2 text-gray-600 text-sm mt-4">
-          <li class="flex items-start gap-2">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Gas paid in <strong>QMS</strong>
-          </li>
-          <li class="flex items-start gap-2">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Wallet signature required before every action
-          </li>
-          <li class="flex items-start gap-2">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Self-custody — keys never leave your wallet
-          </li>
-          <li class="flex items-start gap-2">
-            <svg class="w-5 h-5 text-brand-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Real-time reward accrual
-          </li>
-        </ul>
-      </div>
-      <div class="bg-white rounded-2xl border border-gray-100 p-6">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">HOW IT WORKS</p>
-        <h3 class="text-xl font-semibold mb-2" id="how">Four steps to start earning.</h3>
-        <ol class="space-y-3 text-sm text-gray-600 mt-4">
-          <li class="flex gap-3">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center">1</span>
-            Connect wallet & switch to QMS Testnet
-          </li>
-          <li class="flex gap-3">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center">2</span>
-            Get test QMS from the faucet (for gas)
-          </li>
-          <li class="flex gap-3">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center">3</span>
-            Enter amount → sign in your wallet
-          </li>
-          <li class="flex gap-3">
-            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs font-bold flex items-center justify-center">4</span>
-            Action executes after you approve the signature
-          </li>
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  <!-- Warning -->
-  <section class="max-w-5xl mx-auto px-4 sm:px-6 mb-16">
-    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
-      <p class="text-sm font-medium text-amber-800">
-        ⚠️ Free. Unofficial and not independently audited. This is a demo with simulated staking on QMS Testnet.
-        Gas is paid in QMS. Do not use with real funds.
+      <h1 class="text-4xl sm:text-[2.75rem] font-bold tracking-tight text-gray-900 mb-4 leading-[1.15]">
+        Your keys.<br class="sm:hidden" /> Your <span class="text-brand-600">Stake</span>.
+      </h1>
+      <p class="text-base sm:text-lg text-gray-500 max-w-xl mx-auto mb-8 leading-relaxed">
+        A self-custody DeFi yield product on QMS Testnet. Stake <strong class="text-gray-700">QMS</strong> or <strong class="text-gray-700">USDC</strong>, receive a staking receipt, and earn continuous rewards — while keeping full control of your keys.
       </p>
-    </div>
-  </section>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button id="heroStakeBtn" class="w-full sm:w-auto bg-gray-900 text-white font-medium rounded-xl px-7 py-3.5 hover:bg-gray-800 transition shadow-sm flex items-center justify-center gap-2">
+          <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Start Staking
+        </button>
+        <a href="#about" class="w-full sm:w-auto border border-gray-200 bg-white text-gray-700 font-medium rounded-xl px-7 py-3.5 hover:bg-gray-50 transition text-center shadow-sm">
+          About the project
+        </a>
+      </div>
+      <p class="mt-5 text-xs text-gray-400">
+        v1.2 · Unofficial demo · Not audited · Do not use with real funds
+      </p>
+    </section>
+
+    <!-- About / Product story -->
+    <section id="about" class="max-w-6xl mx-auto px-4 sm:px-6 mb-12">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-card overflow-hidden">
+        <div class="grid md:grid-cols-2 gap-0">
+          <div class="p-6 sm:p-8 lg:p-10 border-b md:border-b-0 md:border-r border-gray-100">
+            <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wider mb-2">The project</p>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 tracking-tight">StakePouch is a self-custody DeFi yield product built for the QMS Testnet.</h2>
+            <p class="text-gray-600 leading-relaxed mb-4">
+              Stake <strong class="text-gray-800">QMS</strong> or <strong class="text-gray-800">USDC</strong> on QMS Testnet, receive a staking receipt, and earn continuous yield — all while keeping full control of your keys. No middlemen. No custodial risk. Every action is signed in your wallet before it runs.
+            </p>
+            <p class="text-gray-600 leading-relaxed">
+              Designed for the post-quantum era of QMS, StakePouch keeps the experience simple: connect, stake, earn. Transparent APY, live positions, and explorer-linked transactions so you can verify every step.
+            </p>
+          </div>
+          <div class="p-6 sm:p-8 lg:p-10 bg-gray-50/50">
+            <p class="text-[11px] font-semibold text-brand-600 uppercase tracking-wider mb-2">Staking pairs</p>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 tracking-tight">QMS &amp; USDC on QMS Testnet.</h2>
+            <p class="text-gray-600 leading-relaxed mb-4">
+              Two pools are live on the testnet: stake <strong class="text-gray-800">QMS</strong> or <strong class="text-gray-800">USDC</strong>. Each position tracks your share and accrues rewards in real time. Gas is always paid in QMS.
+            </p>
+            <ul class="space-y-2.5 text-sm text-gray-600">
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Unstake when you want — no lock-ups in this demo
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Claim rewards anytime, with a clear network fee in QMS
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Self-custody first: your keys never leave your wallet
+              </li>
+            </ul>
+            <p class="mt-6 text-sm font-medium text-gray-800 tracking-tight">
+              Your keys. Your stake. Your yield.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card">
+          <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Total Staked</p>
+          <p id="statTvl" class="text-2xl font-semibold tracking-tight stat-value">0.00</p>
+          <p class="text-xs text-gray-400 mt-0.5">QMS + USDC</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card">
+          <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">APY</p>
+          <p id="statApy" class="text-2xl font-semibold tracking-tight text-brand-600 stat-value">12.5%</p>
+          <p class="text-xs text-gray-400 mt-0.5">Estimated</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card">
+          <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Active Stakers</p>
+          <p id="statStakers" class="text-2xl font-semibold tracking-tight stat-value">0</p>
+          <p class="text-xs text-gray-400 mt-0.5">Addresses</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-card">
+          <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-1.5">Network Fee</p>
+          <p class="text-2xl font-semibold tracking-tight text-brand-600">0.001</p>
+          <p class="text-xs text-gray-400 mt-0.5">QMS per tx</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- QMS Tools -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-12">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-card px-4 py-3.5 flex flex-wrap items-center justify-center sm:justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <a href="https://faucet.testnet.qms.finance" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-50 text-brand-700 text-sm font-medium hover:bg-brand-100 transition border border-brand-100">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Faucet
+          </a>
+          <a href="https://testnet.qmsscan.io" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 text-gray-700 text-sm font-medium hover:bg-gray-100 transition border border-gray-100">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Explorer
+          </a>
+          <a href="https://qpouch.vercel.app" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 text-gray-700 text-sm font-medium hover:bg-gray-100 transition border border-gray-100">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Dashboard
+          </a>
+        </div>
+        <p class="text-xs text-gray-400 hidden sm:block">Get free test QMS for gas, then stake</p>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 mb-16">
+      <div class="grid lg:grid-cols-5 gap-6 lg:gap-8">
+
+        <!-- Staking Card -->
+        <div class="lg:col-span-3">
+          <div id="stake" class="bg-white rounded-2xl border border-gray-100 shadow-card overflow-hidden">
+            <div class="flex border-b border-gray-100">
+              <button data-tab="stake" class="tab-btn flex-1 py-3.5 text-sm tab-active">Stake</button>
+              <button data-tab="unstake" class="tab-btn flex-1 py-3.5 text-sm text-gray-400 hover:text-gray-600 font-medium transition">Unstake</button>
+              <button data-tab="claim" class="tab-btn flex-1 py-3.5 text-sm text-gray-400 hover:text-gray-600 font-medium transition">Claim</button>
+            </div>
+
+            <div class="p-5 sm:p-6">
+              <!-- Pool selector: QMS / USDC -->
+              <div class="mb-5">
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Staking pair · QMS Testnet</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="poolQMS" class="pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-brand-500 bg-brand-50 text-brand-800 text-sm font-semibold transition">
+                    <span class="w-6 h-6 rounded-full bg-brand-600 text-white text-[10px] font-bold flex items-center justify-center">Q</span>
+                    QMS
+                  </button>
+                  <button type="button" id="poolUSDC" class="pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-600 text-sm font-semibold hover:border-gray-300 transition">
+                    <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">$</span>
+                    USDC
+                  </button>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-2">Selected: <span id="poolLabel" class="font-medium text-gray-600">QMS</span> · Network fee always in QMS</p>
+              </div>
+
+              <div id="walletStatus" class="mb-5 hidden">
+                <div class="rounded-xl bg-gray-50 border border-gray-100 p-3.5 space-y-1.5">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Connected</span>
+                    <span id="walletAddress" class="font-mono text-gray-800 font-medium text-[13px]"></span>
+                  </div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Pool balance</span>
+                    <span id="walletBalance" class="font-medium text-gray-800">0.00 QMS</span>
+                  </div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Gas (QMS)</span>
+                    <span id="gasBalance" class="font-medium text-brand-700">0.00 QMS</span>
+                  </div>
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-400">Network</span>
+                    <span class="font-medium text-gray-700 text-[13px]">QMS Testnet · Fee 0.001 QMS</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-5 flex gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-amber-100 text-[13px] text-amber-800 leading-snug">
+                <svg class="w-4 h-4 shrink-0 mt-0.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span><strong>Signature required.</strong> Every action opens your wallet. Network fee: <strong>0.001 QMS</strong>.</span>
+              </div>
+
+              <div id="panel-stake" class="tab-panel">
+                <label class="block text-sm font-medium text-gray-600 mb-2">Amount to stake</label>
+                <div class="relative mb-3">
+                  <input id="stakeAmount" type="number" min="0" step="0.01" placeholder="0.00"
+                    class="w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 pr-20 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition" />
+                  <button id="maxStakeBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition">MAX</button>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mb-1.5">
+                  <span>You receive</span>
+                  <span id="stakePreview" class="font-medium text-gray-700">0.00 stQMS</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mb-5">
+                  <span>Network fee</span>
+                  <span class="font-medium text-brand-700">0.001 QMS</span>
+                </div>
+                <button id="stakeBtn" class="w-full bg-gray-900 text-white font-semibold rounded-xl py-3.5 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                  Connect Wallet to Stake
+                </button>
+              </div>
+
+              <div id="panel-unstake" class="tab-panel hidden">
+                <label class="block text-sm font-medium text-gray-600 mb-2">Amount to unstake</label>
+                <div class="relative mb-3">
+                  <input id="unstakeAmount" type="number" min="0" step="0.01" placeholder="0.00"
+                    class="w-full text-2xl font-semibold bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 pr-20 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition" />
+                  <button id="maxUnstakeBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition">MAX</button>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mb-1.5">
+                  <span>Your staked balance</span>
+                  <span id="stakedBalance" class="font-medium text-gray-700">0.00 stQMS</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mb-5">
+                  <span>Network fee</span>
+                  <span class="font-medium text-brand-700">0.001 QMS</span>
+                </div>
+                <button id="unstakeBtn" class="w-full bg-gray-900 text-white font-semibold rounded-xl py-3.5 hover:bg-gray-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                  Connect Wallet to Unstake
+                </button>
+              </div>
+
+              <div id="panel-claim" class="tab-panel hidden">
+                <div class="bg-brand-50 rounded-xl p-5 mb-4 text-center border border-brand-100">
+                  <p class="text-sm text-brand-600 mb-1">Pending Rewards</p>
+                  <p id="pendingRewards" class="text-3xl font-bold text-brand-800 tracking-tight">0.00 QMS</p>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mb-5">
+                  <span>Network fee</span>
+                  <span class="font-medium text-brand-700">0.001 QMS</span>
+                </div>
+                <button id="claimBtn" class="w-full bg-brand-600 text-white font-semibold rounded-xl py-3.5 hover:bg-brand-700 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                  Connect Wallet to Claim
+                </button>
+                <p class="text-xs text-center text-gray-400 mt-3">Rewards accrue every second. Sign in your wallet to claim.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="positionCard" class="mt-4 bg-white rounded-2xl border border-gray-100 shadow-card p-5 hidden">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Your Position</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="rounded-xl bg-gray-50 p-3.5 border border-gray-100">
+                <p class="text-xs text-gray-400 mb-0.5">Staked</p>
+                <p id="posStaked" class="font-semibold text-lg tracking-tight">0.00</p>
+              </div>
+              <div class="rounded-xl bg-brand-50 p-3.5 border border-brand-100">
+                <p class="text-xs text-brand-600 mb-0.5">Rewards</p>
+                <p id="posRewards" class="font-semibold text-lg tracking-tight text-brand-700">0.00</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="txLog" class="mt-4 bg-white rounded-2xl border border-gray-100 shadow-card p-5 hidden">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Recent Transactions</h3>
+            <div id="txList" class="space-y-0 divide-y divide-gray-50 text-sm"></div>
+          </div>
+        </div>
+
+        <!-- Side panel -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-5">
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Features</p>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Built for QMS Testnet</h3>
+            <ul class="space-y-2.5 text-sm text-gray-600">
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Gas paid in <strong>QMS</strong>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Wallet signature required before every action
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Self-custody — keys never leave your wallet
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </span>
+                Real-time reward accrual + explorer links
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-card p-5" id="how">
+            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">How it works</p>
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Four steps to earn</h3>
+            <ol class="space-y-3 text-sm text-gray-600">
+              <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">1</span>
+                <span>Connect wallet & switch to QMS Testnet</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">2</span>
+                <span>Get test QMS from the faucet (for gas)</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">3</span>
+                <span>Enter amount → sign in your wallet</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">4</span>
+                <span>Action executes after you approve</span>
+              </li>
+            </ol>
+          </div>
+
+          <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-[13px] text-amber-800 leading-relaxed">
+            <strong>Disclaimer.</strong> Unofficial demo with simulated staking. Not audited. Do not use with real funds. Gas is paid in QMS on the testnet.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <!-- Footer -->
-  <footer class="border-t border-gray-100 py-10">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-gray-500 mb-6">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded bg-brand-500 flex items-center justify-center">
-            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+  <footer class="border-t border-gray-200 bg-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+            <svg class="w-full h-full" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="11" fill="url(#lgFoot)"/>
+  <circle cx="20" cy="20" r="11" stroke="white" stroke-width="2" fill="none" opacity="0.9"/>
+  <path d="M20 13v14M16.5 16.5c0-1.5 1.5-2.5 3.5-2.5s3.5 1 3.5 2.5-1.5 2.2-3.5 2.5c-2 .3-3.5 1.2-3.5 2.8s1.6 2.7 3.5 2.7 3.5-1.1 3.5-2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="lgFoot" x1="8" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+</svg>
           </div>
-          <span>StakePouch · QMS Testnet</span>
+          <div>
+            <span class="font-semibold text-sm block">StakePouch</span>
+            <span class="text-xs text-gray-400">QMS Testnet · Gas in QMS</span>
+          </div>
         </div>
-        <div class="flex items-center gap-4">
-          <p>Gas paid in QMS · Sign before every action</p>
-          <a href="https://x.com/Bolaji877" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-            @Bolaji877
-          </a>
-        </div>
+        <a href="https://x.com/Bolaji877" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-600 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          @Bolaji877
+        </a>
       </div>
 
-      <!-- QMS Official Socials -->
       <div class="border-t border-gray-100 pt-6">
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 text-center sm:text-left">QMS Network Official</p>
-        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
-          <a href="https://x.com/QMSNetwork" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            @QMSNetwork
-          </a>
-          <a href="https://t.me/QMSNetworkOfficial" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.788.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-            Telegram
-          </a>
-          <a href="https://discord.gg/qmsnetwork" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-            Discord
-          </a>
-          <a href="https://qms.finance" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            Website
-          </a>
-          <a href="https://docs.qms.finance" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            Docs
-          </a>
-          <a href="https://medium.com/@QMSNetwork" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            Medium
-          </a>
-          <a href="https://linkedin.com/company/qms-network" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-gray-500 hover:text-brand-600 transition">
-            LinkedIn
-          </a>
+        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider mb-3">QMS Network Official</p>
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          <a href="https://x.com/QMSNetwork" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">X / Twitter</a>
+          <a href="https://t.me/QMSNetworkOfficial" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">Telegram</a>
+          <a href="https://discord.gg/qmsnetwork" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">Discord</a>
+          <a href="https://qms.finance" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">Website</a>
+          <a href="https://docs.qms.finance" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">Docs</a>
+          <a href="https://medium.com/@QMSNetwork" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">Medium</a>
+          <a href="https://linkedin.com/company/qms-network" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-brand-600 transition">LinkedIn</a>
         </div>
       </div>
     </div>
   </footer>
 
-  <!-- Toast -->
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50"></div>
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg opacity-0 pointer-events-none transition-all duration-300 z-50 max-w-[90vw] text-center"></div>
 
   <script>
-    // ============ QMS TESTNET CONFIG ============
     const QMS_CHAIN_ID = 19480n;
     const QMS_CHAIN_ID_HEX = '0x4C18';
     const QMS_PARAMS = {
@@ -391,22 +467,23 @@
       rpcUrls: ['https://rpc.testnet.qms.finance'],
       blockExplorerUrls: ['https://testnet.qmsscan.io']
     };
-
-    const APY = 0.125; // 12.5%
+    const APY = 0.125;
     const REWARD_PER_SECOND = APY / (365 * 24 * 3600);
-    const NETWORK_FEE_QMS = 0.001; // small network fee charged in QMS per tx
+    const NETWORK_FEE_QMS = 0.001;
     const STORAGE_KEY = 'stakepouch_qms_v1';
     const TX_LOG_KEY = 'stakepouch_txlog_v1';
     const EXPLORER_TX = 'https://testnet.qmsscan.io/tx/';
 
-    // ============ STATE ============
-    let provider = null;
-    let signer = null;
-    let userAddress = null;
-    let userBalance = 0;
+    let provider = null, signer = null, userAddress = null;
+    // balances & positions per pool: QMS | USDC
+    let currentPool = 'QMS';
+    const POOLS = {
+      QMS:  { symbol: 'QMS',  receipt: 'stQMS',  decimals: 18 },
+      USDC: { symbol: 'USDC', receipt: 'stUSDC', decimals: 6 }
+    };
+    let balances = { QMS: 0, USDC: 0 }; // mock wallet balances
     let positions = loadPositions();
 
-    // ============ DOM ============
     const connectBtn = document.getElementById('connectBtn');
     const disconnectBtn = document.getElementById('disconnectBtn');
     const heroStakeBtn = document.getElementById('heroStakeBtn');
@@ -424,180 +501,111 @@
     const toastEl = document.getElementById('toast');
     const networkBadge = document.getElementById('networkBadge');
 
-    // ============ HELPERS ============
-    function loadPositions() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch { return {}; }
-    }
-
-    function savePositions() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
-    }
-
-    function shortAddress(addr) {
-      return addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
-    }
-
-    function format(n, decimals = 2) {
-      return Number(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    }
-
+    function loadPositions() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
+    function savePositions() { localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); }
+    function shortAddress(addr) { return addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : ''; }
+    function format(n, decimals = 2) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }); }
     function showToast(msg, duration = 3500) {
       toastEl.textContent = msg;
       toastEl.classList.remove('opacity-0');
       toastEl.classList.add('opacity-100');
-      setTimeout(() => {
-        toastEl.classList.remove('opacity-100');
-        toastEl.classList.add('opacity-0');
-      }, duration);
+      setTimeout(() => { toastEl.classList.remove('opacity-100'); toastEl.classList.add('opacity-0'); }, duration);
     }
-
     function generateTxHash() {
       const bytes = new Uint8Array(32);
       crypto.getRandomValues(bytes);
       return '0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
     }
-
-    function loadTxLog() {
-      try {
-        return JSON.parse(localStorage.getItem(TX_LOG_KEY) || '[]');
-      } catch { return []; }
-    }
-
-    function saveTxLog(list) {
-      localStorage.setItem(TX_LOG_KEY, JSON.stringify(list.slice(0, 20))); // keep last 20
-    }
-
+    function loadTxLog() { try { return JSON.parse(localStorage.getItem(TX_LOG_KEY) || '[]'); } catch { return []; } }
+    function saveTxLog(list) { localStorage.setItem(TX_LOG_KEY, JSON.stringify(list.slice(0, 20))); }
     function addTxToLog(type, amount, hash) {
       const list = loadTxLog();
-      list.unshift({
-        type,
-        amount,
-        hash,
-        fee: NETWORK_FEE_QMS,
-        time: new Date().toISOString(),
-        address: userAddress
-      });
+      list.unshift({ type, amount, hash, fee: NETWORK_FEE_QMS, time: new Date().toISOString(), address: userAddress, pool: currentPool });
       saveTxLog(list);
       renderTxLog();
     }
-
     function renderTxLog() {
       const list = loadTxLog().filter(t => !userAddress || t.address === userAddress);
       const container = document.getElementById('txList');
       const logEl = document.getElementById('txLog');
-      if (!list.length) {
-        logEl.classList.add('hidden');
-        return;
-      }
+      if (!list.length) { logEl.classList.add('hidden'); return; }
       logEl.classList.remove('hidden');
       container.innerHTML = list.slice(0, 8).map(t => {
-        const shortHash = t.hash.slice(0, 10) + '…' + t.hash.slice(-8);
         const label = t.type === 'stake' ? 'Stake' : t.type === 'unstake' ? 'Unstake' : 'Claim';
         const color = t.type === 'claim' ? 'text-brand-600' : 'text-gray-800';
-        const explorerUrl = EXPLORER_TX + t.hash;
-        return `
-          <div class="flex flex-col gap-1 py-3 border-b border-gray-50 last:border-0">
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <span class="font-medium ${color}">${label}</span>
-                <span class="text-gray-500 ml-2">${format(t.amount)} TEST</span>
-                <span class="text-xs text-gray-400 ml-2">· fee ${t.fee} QMS</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-mono text-xs text-gray-500 break-all">${t.hash}</span>
-              <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer"
-                 class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition shrink-0">
-                View on Explorer ↗
-              </a>
-            </div>
-          </div>`;
+        return '<div class="py-3 first:pt-0 last:pb-0"><div class="flex items-center justify-between gap-2 mb-1"><div><span class="font-medium ' + color + '">' + label + '</span><span class="text-gray-500 ml-1.5">' + format(t.amount) + ' TEST</span><span class="text-xs text-gray-400 ml-1.5">· ' + t.fee + ' QMS fee</span></div></div><div class="flex items-center gap-2 flex-wrap"><span class="font-mono text-[11px] text-gray-400 break-all">' + t.hash + '</span><a href="' + EXPLORER_TX + t.hash + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition shrink-0">View on Explorer ↗</a></div></div>';
       }).join('');
     }
-
-    function getPosition(addr) {
-      if (!positions[addr]) {
-        positions[addr] = { staked: 0, rewards: 0, lastUpdate: Date.now() };
-      }
-      return positions[addr];
+    function posKey(addr, pool) { return addr + '::' + pool; }
+    function getPosition(addr, pool) {
+      pool = pool || currentPool;
+      const k = posKey(addr, pool);
+      if (!positions[k]) positions[k] = { staked: 0, rewards: 0, lastUpdate: Date.now(), pool: pool };
+      return positions[k];
     }
-
-    function accrueRewards(addr) {
-      const pos = getPosition(addr);
+    function accrueRewards(addr, pool) {
+      pool = pool || currentPool;
+      const pos = getPosition(addr, pool);
       const now = Date.now();
       const seconds = (now - pos.lastUpdate) / 1000;
-      if (pos.staked > 0 && seconds > 0) {
-        pos.rewards += pos.staked * REWARD_PER_SECOND * seconds;
-      }
+      if (pos.staked > 0 && seconds > 0) pos.rewards += pos.staked * REWARD_PER_SECOND * seconds;
       pos.lastUpdate = now;
       return pos;
     }
-
-    // ============ NETWORK ============
+    function userBalance() { return balances[currentPool] || 0; }
+    function setUserBalance(v) { balances[currentPool] = v; }
+    function poolMeta() { return POOLS[currentPool]; }
+    function setPool(pool) {
+      if (!POOLS[pool]) return;
+      currentPool = pool;
+      document.getElementById('poolLabel').textContent = pool;
+      document.getElementById('poolQMS').className = pool === 'QMS'
+        ? 'pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-brand-500 bg-brand-50 text-brand-800 text-sm font-semibold transition'
+        : 'pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-600 text-sm font-semibold hover:border-gray-300 transition';
+      document.getElementById('poolUSDC').className = pool === 'USDC'
+        ? 'pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-brand-500 bg-brand-50 text-brand-800 text-sm font-semibold transition'
+        : 'pool-btn flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-600 text-sm font-semibold hover:border-gray-300 transition';
+      updateUserUI();
+    }
     async function ensureQMSNetwork() {
       if (!window.ethereum) throw new Error('No wallet found');
-
       try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: QMS_CHAIN_ID_HEX }],
-        });
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: QMS_CHAIN_ID_HEX }] });
       } catch (switchError) {
-        // Chain not added yet
         if (switchError.code === 4902 || switchError.code === -32603) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [QMS_PARAMS],
-          });
-        } else {
-          throw switchError;
-        }
+          await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [QMS_PARAMS] });
+        } else throw switchError;
       }
     }
-
-    // ============ SIGNATURE (required before every action) ============
     async function requireSignature(actionName) {
-      if (!signer || !userAddress) {
-        throw new Error('Wallet not connected');
-      }
-
-      const message = `StakePouch on QMS Testnet\n\nI authorize the following action:\n${actionName}\n\nNetwork: QMS Testnet (Chain ID 19480)\nGas paid in: QMS\nTimestamp: ${new Date().toISOString()}\n\nThis signature is required before the action can proceed.`;
-
+      if (!signer || !userAddress) throw new Error('Wallet not connected');
+      const message = 'StakePouch on QMS Testnet\n\nI authorize the following action:\n' + actionName + '\n\nNetwork: QMS Testnet (Chain ID 19480)\nGas paid in: QMS\nTimestamp: ' + new Date().toISOString() + '\n\nThis signature is required before the action can proceed.';
       showToast('Please sign in your wallet…');
-
       try {
-        const signature = await signer.signMessage(message);
-        console.log('Signature received:', signature.slice(0, 20) + '…');
-        return signature;
+        return await signer.signMessage(message);
       } catch (err) {
-        if (err.code === 4001 || err.code === 'ACTION_REJECTED') {
-          throw new Error('Signature rejected in wallet');
-        }
+        if (err.code === 4001 || err.code === 'ACTION_REJECTED') throw new Error('Signature rejected in wallet');
         throw err;
       }
     }
-
-    // ============ UI UPDATE ============
     function updateGlobalStats() {
       let totalStaked = 0;
-      let totalRewards = 0;
-      let stakers = 0;
-      for (const addr in positions) {
-        accrueRewards(addr);
-        const p = positions[addr];
+      const stakerSet = new Set();
+      for (const k in positions) {
+        const p = positions[k];
+        const parts = k.split('::');
+        const addr = parts[0];
+        const pool = parts[1] || 'QMS';
+        accrueRewards(addr, pool);
         if (p.staked > 0) {
           totalStaked += p.staked;
-          stakers++;
+          stakerSet.add(addr);
         }
-        totalRewards += p.rewards;
       }
       document.getElementById('statTvl').textContent = format(totalStaked);
-      document.getElementById('statStakers').textContent = stakers;
+      document.getElementById('statStakers').textContent = stakerSet.size;
       document.getElementById('statApy').textContent = (APY * 100).toFixed(1) + '%';
     }
-
     function updateUserUI() {
       if (!userAddress) {
         walletStatus.classList.add('hidden');
@@ -609,208 +617,162 @@
         stakeBtn.textContent = 'Connect Wallet to Stake';
         unstakeBtn.textContent = 'Connect Wallet to Unstake';
         claimBtn.textContent = 'Connect Wallet to Claim';
-        stakeBtn.disabled = true;
-        unstakeBtn.disabled = true;
-        claimBtn.disabled = true;
+        stakeBtn.disabled = true; unstakeBtn.disabled = true; claimBtn.disabled = true;
         return;
       }
-
       walletStatus.classList.remove('hidden');
       networkBadge.classList.remove('hidden');
       disconnectBtn.classList.remove('hidden');
       connectBtn.classList.add('hidden');
+      const meta = poolMeta();
       walletAddressEl.textContent = shortAddress(userAddress);
-      walletBalanceEl.textContent = format(userBalance) + ' TEST';
-
-      const pos = accrueRewards(userAddress);
-      document.getElementById('stakedBalance').textContent = format(pos.staked) + ' stTEST';
-      document.getElementById('pendingRewards').textContent = format(pos.rewards) + ' TEST';
-      document.getElementById('posStaked').textContent = format(pos.staked);
-      document.getElementById('posRewards').textContent = format(pos.rewards);
-
+      walletBalanceEl.textContent = format(userBalance()) + ' ' + meta.symbol;
+      const gasEl = document.getElementById('gasBalance');
+      if (gasEl) gasEl.textContent = format(balances.QMS) + ' QMS';
+      const pos = accrueRewards(userAddress, currentPool);
+      document.getElementById('stakedBalance').textContent = format(pos.staked) + ' ' + meta.receipt;
+      document.getElementById('pendingRewards').textContent = format(pos.rewards) + ' ' + meta.symbol;
+      document.getElementById('posStaked').textContent = format(pos.staked) + ' ' + meta.receipt;
+      document.getElementById('posRewards').textContent = format(pos.rewards) + ' ' + meta.symbol;
       positionCard.classList.remove('hidden');
-
-      stakeBtn.textContent = 'Sign & Stake';
+      stakeBtn.textContent = 'Sign & Stake ' + meta.symbol;
       unstakeBtn.textContent = 'Sign & Unstake';
       claimBtn.textContent = 'Sign & Claim Rewards';
       stakeBtn.disabled = false;
       unstakeBtn.disabled = pos.staked <= 0;
       claimBtn.disabled = pos.rewards <= 0.0001;
-
       const amt = parseFloat(stakeAmountInput.value) || 0;
-      document.getElementById('stakePreview').textContent = format(amt) + ' stTEST';
+      document.getElementById('stakePreview').textContent = format(amt) + ' ' + meta.receipt;
       renderTxLog();
     }
-
-    // ============ WALLET ============
     async function connectWallet() {
-      if (!window.ethereum) {
-        showToast('No wallet found. Install MetaMask or another Web3 wallet.');
-        return;
-      }
+      if (!window.ethereum) { showToast('No wallet found. Install MetaMask or another Web3 wallet.'); return; }
       try {
-        // First switch / add QMS Testnet
         await ensureQMSNetwork();
-
         provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send('eth_requestAccounts', []);
         signer = await provider.getSigner();
         userAddress = await signer.getAddress();
-
-        // Verify we are on QMS
         const network = await provider.getNetwork();
-        if (network.chainId !== QMS_CHAIN_ID) {
-          showToast('Please switch to QMS Testnet');
-          return;
-        }
-
-        // Mock balance
-        const key = 'mock_balance_' + userAddress.toLowerCase();
-        if (!localStorage.getItem(key)) {
-          localStorage.setItem(key, '1000');
-        }
-        userBalance = parseFloat(localStorage.getItem(key) || '0');
-
+        if (network.chainId !== QMS_CHAIN_ID) { showToast('Please switch to QMS Testnet'); return; }
+        // Seed mock balances for QMS & USDC on this address
+        ['QMS', 'USDC'].forEach(function(pool) {
+          const key = 'mock_balance_' + pool + '_' + userAddress.toLowerCase();
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, pool === 'QMS' ? '1000' : '5000');
+          }
+          balances[pool] = parseFloat(localStorage.getItem(key) || '0');
+        });
         updateUserUI();
         updateGlobalStats();
-        showToast('Connected to QMS Testnet');
-        connectBtn.textContent = shortAddress(userAddress);
+        showToast('Connected to QMS Testnet · Pools: QMS & USDC');
       } catch (err) {
         console.error(err);
         showToast(err.message || 'Connection failed');
       }
     }
-
-    // ============ ACTIONS (always require signature first) ============
+    function disconnectWallet() {
+      userAddress = null; signer = null; provider = null;
+      updateUserUI();
+      showToast('Wallet disconnected');
+    }
+    function persistBalance(pool) {
+      localStorage.setItem('mock_balance_' + pool + '_' + userAddress.toLowerCase(), balances[pool].toString());
+    }
     async function doStake() {
       if (!userAddress) return connectWallet();
-
+      const meta = poolMeta();
       const amount = parseFloat(stakeAmountInput.value);
-      if (!amount || amount <= 0) {
-        showToast('Enter a valid amount');
-        return;
+      if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+      // Fee always in QMS; if staking USDC still need QMS for gas
+      if (currentPool === 'QMS') {
+        if (amount + NETWORK_FEE_QMS > balances.QMS) { showToast('Insufficient QMS (amount + 0.001 fee)'); return; }
+      } else {
+        if (amount > balances.USDC) { showToast('Insufficient USDC'); return; }
+        if (NETWORK_FEE_QMS > balances.QMS) { showToast('Need 0.001 QMS for network fee'); return; }
       }
-      if (amount + NETWORK_FEE_QMS > userBalance) {
-        showToast('Insufficient balance (need amount + 0.001 QMS fee)');
-        return;
-      }
-
       try {
-        await requireSignature(`Stake ${format(amount)} TEST\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
-
-        const pos = accrueRewards(userAddress);
+        await requireSignature('Stake ' + format(amount) + ' ' + meta.symbol + ' on QMS Testnet\nNetwork fee: ' + NETWORK_FEE_QMS + ' QMS');
+        const pos = accrueRewards(userAddress, currentPool);
         pos.staked += amount;
-        userBalance -= amount;
-        userBalance -= NETWORK_FEE_QMS; // deduct network fee
-        if (userBalance < 0) userBalance = 0;
-        localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
+        balances[currentPool] -= amount;
+        balances.QMS -= NETWORK_FEE_QMS;
+        if (balances[currentPool] < 0) balances[currentPool] = 0;
+        if (balances.QMS < 0) balances.QMS = 0;
+        persistBalance(currentPool);
+        persistBalance('QMS');
         savePositions();
-
         const hash = generateTxHash();
         addTxToLog('stake', amount, hash);
-
         stakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Staked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
-      } catch (err) {
-        showToast(err.message || 'Action cancelled');
-      }
+        showToast('Staked ' + format(amount) + ' ' + meta.symbol + ' · Fee ' + NETWORK_FEE_QMS + ' QMS');
+      } catch (err) { showToast(err.message || 'Action cancelled'); }
     }
-
     async function doUnstake() {
       if (!userAddress) return connectWallet();
-
+      const meta = poolMeta();
       const amount = parseFloat(unstakeAmountInput.value);
-      const pos = accrueRewards(userAddress);
-      if (!amount || amount <= 0) {
-        showToast('Enter a valid amount');
-        return;
-      }
-      if (amount > pos.staked) {
-        showToast('Amount exceeds staked balance');
-        return;
-      }
-
+      const pos = accrueRewards(userAddress, currentPool);
+      if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+      if (amount > pos.staked) { showToast('Amount exceeds staked balance'); return; }
+      if (NETWORK_FEE_QMS > balances.QMS) { showToast('Need 0.001 QMS for network fee'); return; }
       try {
-        await requireSignature(`Unstake ${format(amount)} stTEST\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
-
+        await requireSignature('Unstake ' + format(amount) + ' ' + meta.receipt + '\nNetwork fee: ' + NETWORK_FEE_QMS + ' QMS');
         pos.staked -= amount;
-        userBalance += amount;
-        userBalance -= NETWORK_FEE_QMS; // deduct network fee
-        if (userBalance < 0) userBalance = 0;
-        localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
+        balances[currentPool] += amount;
+        balances.QMS -= NETWORK_FEE_QMS;
+        if (balances.QMS < 0) balances.QMS = 0;
+        persistBalance(currentPool);
+        persistBalance('QMS');
         savePositions();
-
         const hash = generateTxHash();
         addTxToLog('unstake', amount, hash);
-
         unstakeAmountInput.value = '';
         updateUserUI();
         updateGlobalStats();
-        showToast(`Unstaked ${format(amount)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
-      } catch (err) {
-        showToast(err.message || 'Action cancelled');
-      }
+        showToast('Unstaked ' + format(amount) + ' ' + meta.symbol + ' · Fee ' + NETWORK_FEE_QMS + ' QMS');
+      } catch (err) { showToast(err.message || 'Action cancelled'); }
     }
-
     async function doClaim() {
       if (!userAddress) return connectWallet();
-
-      const pos = accrueRewards(userAddress);
-      if (pos.rewards <= 0) {
-        showToast('No rewards to claim');
-        return;
-      }
-
+      const meta = poolMeta();
+      const pos = accrueRewards(userAddress, currentPool);
+      if (pos.rewards <= 0) { showToast('No rewards to claim'); return; }
+      if (NETWORK_FEE_QMS > balances.QMS) { showToast('Need 0.001 QMS for network fee'); return; }
       try {
-        await requireSignature(`Claim ${format(pos.rewards)} TEST rewards\nNetwork fee: ${NETWORK_FEE_QMS} QMS`);
-
+        await requireSignature('Claim ' + format(pos.rewards) + ' ' + meta.symbol + ' rewards\nNetwork fee: ' + NETWORK_FEE_QMS + ' QMS');
         const claimed = pos.rewards;
-        userBalance += claimed;
-        userBalance -= NETWORK_FEE_QMS; // deduct network fee
-        if (userBalance < 0) userBalance = 0;
+        balances[currentPool] += claimed;
+        balances.QMS -= NETWORK_FEE_QMS;
+        if (balances.QMS < 0) balances.QMS = 0;
         pos.rewards = 0;
-        localStorage.setItem('mock_balance_' + userAddress.toLowerCase(), userBalance.toString());
+        persistBalance(currentPool);
+        persistBalance('QMS');
         savePositions();
-
         const hash = generateTxHash();
         addTxToLog('claim', claimed, hash);
-
         updateUserUI();
         updateGlobalStats();
-        showToast(`Claimed ${format(claimed)} TEST · Fee ${NETWORK_FEE_QMS} QMS deducted`);
-      } catch (err) {
-        showToast(err.message || 'Action cancelled');
-      }
+        showToast('Claimed ' + format(claimed) + ' ' + meta.symbol + ' · Fee ' + NETWORK_FEE_QMS + ' QMS');
+      } catch (err) { showToast(err.message || 'Action cancelled'); }
     }
 
-    // ============ TABS ============
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.dataset.tab;
         document.querySelectorAll('.tab-btn').forEach(b => {
-          b.classList.remove('text-gray-900', 'border-b-2', 'border-brand-500', 'font-semibold');
-          b.classList.add('text-gray-500', 'font-medium');
+          b.classList.remove('tab-active', 'text-gray-900');
+          b.classList.add('text-gray-400', 'font-medium');
         });
-        btn.classList.add('text-gray-900', 'border-b-2', 'border-brand-500', 'font-semibold');
-        btn.classList.remove('text-gray-500', 'font-medium');
-
+        btn.classList.add('tab-active');
+        btn.classList.remove('text-gray-400', 'font-medium');
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         document.getElementById('panel-' + tab).classList.remove('hidden');
       });
     });
 
-    // ============ DISCONNECT ============
-    function disconnectWallet() {
-      userAddress = null;
-      signer = null;
-      provider = null;
-      updateUserUI();
-      showToast('Wallet disconnected');
-    }
-
-    // ============ EVENTS ============
     connectBtn.addEventListener('click', connectWallet);
     disconnectBtn.addEventListener('click', disconnectWallet);
     heroStakeBtn.addEventListener('click', () => {
@@ -820,52 +782,33 @@
     stakeBtn.addEventListener('click', doStake);
     unstakeBtn.addEventListener('click', doUnstake);
     claimBtn.addEventListener('click', doClaim);
-
     maxStakeBtn.addEventListener('click', () => {
-      stakeAmountInput.value = userBalance.toFixed(2);
-      document.getElementById('stakePreview').textContent = format(userBalance) + ' stTEST';
+      const bal = userBalance();
+      const maxAmt = currentPool === 'QMS' ? Math.max(0, bal - NETWORK_FEE_QMS) : bal;
+      stakeAmountInput.value = maxAmt.toFixed(2);
+      document.getElementById('stakePreview').textContent = format(parseFloat(stakeAmountInput.value) || 0) + ' ' + poolMeta().receipt;
     });
     maxUnstakeBtn.addEventListener('click', () => {
       if (!userAddress) return;
-      const pos = getPosition(userAddress);
-      unstakeAmountInput.value = pos.staked.toFixed(2);
+      unstakeAmountInput.value = getPosition(userAddress, currentPool).staked.toFixed(2);
     });
-
     stakeAmountInput.addEventListener('input', () => {
-      const amt = parseFloat(stakeAmountInput.value) || 0;
-      document.getElementById('stakePreview').textContent = format(amt) + ' stTEST';
+      document.getElementById('stakePreview').textContent = format(parseFloat(stakeAmountInput.value) || 0) + ' ' + poolMeta().receipt;
     });
+    document.getElementById('poolQMS').addEventListener('click', () => setPool('QMS'));
+    document.getElementById('poolUSDC').addEventListener('click', () => setPool('USDC'));
 
-    // Accrue rewards every second
-    setInterval(() => {
-      if (userAddress) {
-        updateUserUI();
-        updateGlobalStats();
-      }
-    }, 1000);
-
-    // Init
+    setInterval(() => { if (userAddress) { updateUserUI(); updateGlobalStats(); } }, 1000);
     updateGlobalStats();
     updateUserUI();
     renderTxLog();
 
-    // Handle account / chain changes
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          userAddress = null;
-          signer = null;
-          provider = null;
-          updateUserUI();
-        } else {
-          connectWallet();
-        }
+        if (accounts.length === 0) { userAddress = null; signer = null; provider = null; updateUserUI(); }
+        else connectWallet();
       });
-
-      window.ethereum.on('chainChanged', () => {
-        // Reload to re-check network
-        window.location.reload();
-      });
+      window.ethereum.on('chainChanged', () => window.location.reload());
     }
   </script>
 </body>
